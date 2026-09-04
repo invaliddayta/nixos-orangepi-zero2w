@@ -1,4 +1,4 @@
-# orangepi-zero2w-nixos
+# nixos-orangepi-zero2w
 
 NixOS board support for the Orange Pi Zero 2W, based on the Allwinner H618.
 
@@ -25,13 +25,13 @@ See [`HARDWARE.md`](HARDWARE.md) for the full support matrix and validation boun
 
 ## Usage
 
-Add the flake as an input, replacing `your-user` with the repository owner:
+Add the flake as an input:
 
 ```nix
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/61b7c44c4073";
-    orangepi-zero2w.url = "github:your-user/orangepi-zero2w-nixos";
+    orangepi-zero2w.url = "github:invaliddayta/nixos-orangepi-zero2w";
     orangepi-zero2w.inputs.nixpkgs.follows = "nixpkgs";
   };
 
