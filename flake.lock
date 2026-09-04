@@ -1,0 +1,63 @@
+{
+  "nodes": {
+    "armbian-build": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1788441987,
+        "narHash": "sha256-2oAjqLSHqoRlCY4gMHNceT7pUKDGFQmlECgj5VPpabY=",
+        "owner": "armbian",
+        "repo": "build",
+        "rev": "34e66c37211c70ef5cfad9c80dd76389720e19b7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "armbian",
+        "repo": "build",
+        "rev": "34e66c37211c70ef5cfad9c80dd76389720e19b7",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1784356753,
+        "narHash": "sha256-12KrbMiWLcf8m7pCvAtZh1ZrgF85ZXDXvfR/fWTKy84=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "61b7c44c4073f0b827768aff0049561b5110ea5a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "61b7c44c4073",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "armbian-build": "armbian-build",
+        "nixpkgs": "nixpkgs",
+        "uwe5622-source": "uwe5622-source"
+      }
+    },
+    "uwe5622-source": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1788238398,
+        "narHash": "sha256-n2IgWc8juCS4SyC4a+cFwOiKALkN2WH6zNc/9V0xZCo=",
+        "owner": "armbian",
+        "repo": "uwe5622",
+        "rev": "b64c5d6c36015049bdc34aad5f7b307545bfa29c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "armbian",
+        "repo": "uwe5622",
+        "rev": "b64c5d6c36015049bdc34aad5f7b307545bfa29c",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

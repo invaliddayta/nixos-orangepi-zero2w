@@ -1,0 +1,24 @@
+From: NixOS Orange Pi Zero 2W configuration
+Subject: media: cedrus: Use the H616 variant for H616
+
+The Armbian H616 variant patch defines the correct 600 MHz variant but leaves
+the match table pointing at the H6 data. Use the H616 data it introduced.
+
+---
+ drivers/staging/media/sunxi/cedrus/cedrus.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/sunxi/cedrus/cedrus.c b/drivers/staging/media/sunxi/cedrus/cedrus.c
+--- a/drivers/staging/media/sunxi/cedrus/cedrus.c
++++ b/drivers/staging/media/sunxi/cedrus/cedrus.c
+@@ -707,7 +707,7 @@ static const struct of_device_id cedrus_dt_match[] = {
+ 	},
+ 	{
+ 		.compatible = "allwinner,sun50i-h616-video-engine",
+-		.data = &sun50i_h6_cedrus_variant,
++		.data = &sun50i_h616_cedrus_variant,
+ 	},
+ 	{ /* sentinel */ }
+ };
+-- 
+2.51.0

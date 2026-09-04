@@ -1,0 +1,24 @@
+From: NixOS Orange Pi Zero 2W configuration
+Subject: uwe5622: Avoid null loopcheck dereference before WCN probe
+
+Return an initialization error when the WCN proc state is not ready instead
+of dereferencing it. This keeps a failed radio probe from faulting the kernel
+and breaking subsequent reboot.
+
+---
+ drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_procfs.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_procfs.c b/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_procfs.c
+--- a/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_procfs.c
++++ b/drivers/net/wireless/uwe5622/unisocwcn/platform/wcn_procfs.c
+@@ -1245,5 +1245,7 @@ void proc_fs_exit(void)
+ 
+ int get_loopcheck_status(void)
+ {
++	if (!mdbg_proc)
++		return -ENODEV;
+ 	return mdbg_proc->fail_count;
+ }
+-- 
+2.51.0

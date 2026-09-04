@@ -1,0 +1,63 @@
+From: NixOS Orange Pi Zero 2W configuration
+Subject: arm64: dts: allwinner: orangepi-zero2w: Enable HDMI
+
+Enable the H618 display engine and connect its HDMI output to the board's
+type-D connector. The HDMI PHY's 1.8 V supply is ALDO1, matching the board
+power tree and the closely related Orange Pi Zero 3.
+
+---
+ arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero2w.dts | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero2w.dts b/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero2w.dts
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero2w.dts
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero2w.dts
+@@ -25,6 +25,17 @@ chosen {
+ 		stdout-path = "serial0:115200n8";
+ 	};
+ 
++	connector {
++		compatible = "hdmi-connector";
++		type = "d";
++
++		port {
++			hdmi_con_in: endpoint {
++				remote-endpoint = <&hdmi_out_con>;
++			};
++		};
++	};
++
+ 	leds {
+ 		compatible = "gpio-leds";
+ 
+@@ -57,6 +68,10 @@ &cpu0 {
+ 	cpu-supply = <&reg_dcdc2>;
+ };
+ 
++&de {
++	status = "okay";
++};
++
+ &ehci1 {
+ 	status = "okay";
+ };
+@@ -68,6 +83,17 @@ &gpu {
+ 	status = "okay";
+ };
+ 
++&hdmi {
++	hvcc-supply = <&reg_aldo1>;
++	status = "okay";
++};
++
++&hdmi_out {
++	hdmi_out_con: endpoint {
++		remote-endpoint = <&hdmi_con_in>;
++	};
++};
++
+ &mmc0 {
+ 	cd-gpios = <&pio 5 6 GPIO_ACTIVE_LOW>;	/* PF6 */
+ 	bus-width = <4>;
+-- 
+2.51.0

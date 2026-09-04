@@ -1,0 +1,64 @@
+From: NixOS Orange Pi Zero 2W configuration
+Subject: arm64: dts: allwinner: orangepi-zero2w: Enable AW859A Wi-Fi
+
+Describe the board's onboard UWE5622-compatible AW859A radio, its power
+supplies, reset line, clock, and SDIO connection.
+
+---
+ arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero2w.dts | 35 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 35 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero2w.dts b/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero2w.dts
+--- a/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero2w.dts
++++ b/arch/arm64/boot/dts/allwinner/sun50i-h618-orangepi-zero2w.dts
+@@ -51,6 +51,31 @@ reg_vcc3v3: vcc3v3 {
+ 		vin-supply = <&reg_vcc5v>;
+ 		regulator-always-on;
+ 	};
++
++	reg_vcc_wifi_io: vcc-wifi-io {
++		compatible = "regulator-fixed";
++		regulator-name = "vcc-wifi-io";
++		regulator-min-microvolt = <1800000>;
++		regulator-max-microvolt = <1800000>;
++		regulator-always-on;
++		vin-supply = <&reg_vcc3v3>;
++	};
++
++	wifi_pwrseq: wifi-pwrseq {
++		compatible = "mmc-pwrseq-simple";
++		clocks = <&rtc 1>;
++		clock-names = "osc32k-out";
++		reset-gpios = <&pio 6 18 GPIO_ACTIVE_LOW>; /* PG18 */
++		post-power-on-delay-ms = <200>;
++	};
++
++	uwe_bsp: uwe-bsp {
++		compatible = "unisoc,uwe_bsp";
++		data-irq;
++		blksz-512;
++		keep-power-on;
++		status = "okay";
++	};
+ };
+ 
+ &codec {
+@@ -85,6 +106,16 @@ &mmc0 {
+ 	status = "okay";
+ };
+ 
++&mmc1 {
++	vmmc-supply = <&reg_vcc3v3>;
++	vqmmc-supply = <&reg_vcc_wifi_io>;
++	mmc-pwrseq = <&wifi_pwrseq>;
++	bus-width = <4>;
++	non-removable;
++	mmc-ddr-1_8v;
++	status = "okay";
++};
++
+ &ohci1 {
+ 	status = "okay";
+ };
+-- 
+2.51.0
