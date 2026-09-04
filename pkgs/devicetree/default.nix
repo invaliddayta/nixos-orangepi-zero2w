@@ -2,14 +2,14 @@
   applyPatches,
   armbianBuild,
   deviceTree,
-  linux_latest,
+  linux_7_1,
   runCommand,
 }:
 
 let
   source = applyPatches {
     name = "orangepi-zero2w-device-tree-source";
-    src = linux_latest.src;
+    src = linux_7_1.src;
     patches = [
       "${armbianBuild}/patch/kernel/archive/sunxi-7.1/patches.drm/0031-arm64-dts-allwinner-sun50i-h616-Add-SRAM-nodes.patch"
       "${armbianBuild}/patch/kernel/archive/sunxi-7.1/patches.drm/0046-arm64-dts-allwinner-h616-Add-display-pipeline.patch"
@@ -29,7 +29,7 @@ let
     ];
   };
 in
-runCommand "orangepi-zero2w-device-tree-${linux_latest.version}"
+runCommand "orangepi-zero2w-device-tree-${linux_7_1.version}"
   {
     passthru = { inherit source; };
   }

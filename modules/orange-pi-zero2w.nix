@@ -24,7 +24,15 @@ let
   };
 in
 {
-  options.hardware.orangePiZero2W.enable = lib.mkEnableOption "Orange Pi Zero 2W board support";
+  options.hardware.orangePiZero2W = {
+    enable = lib.mkEnableOption "Orange Pi Zero 2W board support";
+
+    recoveryNetwork.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether to configure USB0 as a fixed ECM recovery network.";
+    };
+  };
 
   config = lib.mkIf cfg.enable {
     nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
@@ -35,7 +43,7 @@ in
       configurationLimit = 5;
     };
     boot.loader.timeout = 3;
-    boot.kernelPackages = pkgs.linuxPackagesOrangePiZero2W;
+    boot.kernelPackages = pkgs.orangePiZero2W.kernelPackages;
     boot.kernelParams = [
       "console=tty1"
       "console=ttyS0,115200n8"
@@ -51,13 +59,13 @@ in
 
     hardware.deviceTree = {
       enable = true;
-      dtbSource = pkgs.orangePiZero2WDeviceTree;
+      dtbSource = pkgs.orangePiZero2W.deviceTree;
       name = "allwinner/sun50i-h618-orangepi-zero2w.dtb";
     };
-    hardware.firmware = [ pkgs.uwe5622Firmware ];
+    hardware.firmware = [ pkgs.orangePiZero2W.uwe5622Firmware ];
     hardware.graphics.enable = true;
 
-    systemd.services.usb-gadget = {
+    systemd.services.usb-gadget = lib.mkIf cfg.recoveryNetwork.enable {
       description = "USB ECM recovery network";
       wantedBy = [ "multi-user.target" ];
       after = [
@@ -191,9 +199,9 @@ in
           set -eu
 
           mkdir -p /lib/firmware/uwe5622
-          ln -sfn ${pkgs.uwe5622Firmware}/lib/firmware/uwe5622/wcnmodem.bin \
+          ln -sfn ${pkgs.orangePiZero2W.uwe5622Firmware}/lib/firmware/uwe5622/wcnmodem.bin \
             /lib/firmware/uwe5622/wcnmodem.bin
-          ln -sfn ${pkgs.uwe5622Firmware}/lib/firmware/wifi_2355b001_1ant.ini \
+          ln -sfn ${pkgs.orangePiZero2W.uwe5622Firmware}/lib/firmware/wifi_2355b001_1ant.ini \
             /lib/firmware/wifi_2355b001_1ant.ini
 
           attempts=0

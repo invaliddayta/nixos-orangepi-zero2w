@@ -3,7 +3,7 @@
   gnutar,
   kernelPatches ? [ ],
   lib,
-  linux_latest,
+  linux_7_1,
   features ? { },
   randstructSeed ? "",
   runCommand,
@@ -14,7 +14,7 @@
 
 let
   linuxWithUwe5622 =
-    runCommand "linux-${linux_latest.version}-with-uwe5622-source"
+    runCommand "linux-${linux_7_1.version}-with-uwe5622-source"
       {
         nativeBuildInputs = [
           gnutar
@@ -23,14 +23,14 @@ let
       }
       ''
         mkdir -p $out
-        tar -xf ${linux_latest.src} --strip-components=1 -C $out
+        tar -xf ${linux_7_1.src} --strip-components=1 -C $out
         cp -R --no-preserve=mode,ownership ${uwe5622Source} $out/drivers/net/wireless/uwe5622
         printf '%s\n' 'obj-$(CONFIG_SPARD_WLAN_SUPPORT) += uwe5622/' >> $out/drivers/net/wireless/Makefile
         printf '%s\n' 'source "drivers/net/wireless/uwe5622/Kconfig"' >> $out/drivers/net/wireless/Kconfig
       '';
 
   # Device-tree-only patches are intentionally excluded. They are built by
-  # orangePiZero2WDeviceTree so DTS changes do not invalidate this kernel.
+  # orangePiZero2W.deviceTree so DTS changes do not invalidate this kernel.
   h616DrmCodePatchNames = [
     "0025-dt-bindings-sram-Document-Allwinner-H616-VE-SRAM.patch"
     "0026-dt-bindings-sram-sunxi-sram-Add-H616-SRAM-regions.patch"
@@ -58,7 +58,7 @@ let
     patch = "${armbianBuild}/patch/kernel/archive/sunxi-7.1/patches.drm/${name}";
   }) h616DrmCodePatchNames;
 in
-linux_latest.override {
+linux_7_1.override {
   autoModules = false;
   buildDTBs = false;
   inherit features randstructSeed;
@@ -89,15 +89,11 @@ linux_latest.override {
 
   structuredExtraConfig =
     (with lib.kernel; {
-      ATH9K_HTC = module;
       DRM_SUN4I = yes;
       DRM_SUN8I_DW_HDMI = yes;
       DRM_SUN8I_MIXER = yes;
       IP6_NF_MATCH_RPFILTER = module;
       IP_NF_MATCH_RPFILTER = module;
-      MT7601U = module;
-      MT76x0U = module;
-      MT76x2U = module;
       NETFILTER_XT_MATCH_PKTTYPE = module;
       NF_TABLES = module;
       NF_TABLES_INET = yes;
@@ -110,25 +106,13 @@ linux_latest.override {
       NFT_REJECT_INET = module;
       NFT_REJECT_IPV4 = module;
       NFT_REJECT_IPV6 = module;
-      RT2X00 = module;
-      RT2800USB = module;
-      RTL8XXXU = module;
-      RTW88_8723DU = module;
-      RTW88_8812AU = module;
-      RTW88_8814AU = module;
-      RTW88_8821AU = module;
-      RTW88_8821CU = module;
-      RTW88_8822BU = module;
-      RTW88_8822CU = module;
       SND_SUN4I_CODEC = module;
       SPARD_WLAN_SUPPORT = yes;
       SUN50I_H6_PRCM_PPU = yes;
-      TTY_OVERY_SDIO = module;
       UNISOC_WIFI_PS = yes;
       VIDEO_SUNXI = yes;
       VIDEO_SUNXI_CEDRUS = module;
       WLAN_UWE5622 = module;
-      WLAN_VENDOR_RALINK = yes;
     })
     // structuredExtraConfig;
 }

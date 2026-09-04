@@ -1,45 +1,37 @@
-# NixOS board support for Orange Pi Zero 2W
+# orangepi-zero2w-nixos
 
-Reusable NixOS hardware support for the Allwinner H618-based Orange Pi Zero 2W.
+NixOS board support for the Orange Pi Zero 2W, based on the Allwinner H618.
 
-This flake provides:
+The flake provides a reusable NixOS module, a patched Linux 7.1 kernel, an independently compiled device tree, UWE5622 firmware, U-Boot/extlinux integration, and a minimal SD-card image.
 
-- A NixOS module for board hardware
-- A Linux 7.1 kernel package with H616 display, Cedrus, MMC, and UWE5622 changes
-- An independently compiled device-tree package
-- UWE5622 Wi-Fi firmware
-- U-Boot and extlinux integration
-- A minimal SD-card image for smoke testing
+This repository contains board support only. Applications and machine-specific policy belong downstream.
 
-The repository is hardware enablement only. Application-specific users, services, and UI policy belong in a downstream configuration.
+## Status
 
-## Hardware status
+Tested on the 1 GiB Orange Pi Zero 2W without the expansion board. Only the Zero 2W is supported; the Zero 2 and Zero 3 require separate board support. Other RAM capacities are untested.
 
-| Subsystem | Status |
+| Area | Status |
 | --- | --- |
-| U-Boot, extlinux, microSD, UART0 | Working |
-| CPU frequency scaling and thermal zones | Working |
-| Mini-HDMI video and Mali-G31/Panfrost | Working |
-| USB0 ECM recovery network and USB1 host | Working |
+| Boot, microSD, UART, CPU frequency scaling, thermal | Working |
+| Mini-HDMI video, Mali-G31/Panfrost | Working |
+| USB0 recovery gadget, USB1 host | Working |
 | AW859A/UWE5622 Wi-Fi | Working |
-| ALSA analog codec | Driver-tested; physical output untested |
-| Cedrus MPEG-2, H.264, H.265, and VP8 decode | Working through GStreamer |
-| Touch controller | Detected; interactive mapping untested |
-| Header GPIO, I2C, and SPI | Present; electrical operation requires a fixture/configuration |
-| Bluetooth | Unsupported |
-| HDMI audio | Unsupported |
-| Hardware video encoding | Unsupported |
+| Cedrus MPEG-2, H.264, H.265, VP8 decode | Working |
+| Analog ALSA codec, touch controller, GPIO/I2C/SPI headers | Partially validated |
+| Bluetooth, HDMI audio, hardware video encode | Unsupported |
 | Expansion-board Ethernet and USB | Unsupported |
 
-[`HARDWARE.md`](HARDWARE.md) is the authoritative support matrix and records the validation boundaries.
+See [`HARDWARE.md`](HARDWARE.md) for the full support matrix and validation boundaries.
 
-## Use from a flake
+## Usage
+
+Add the flake as an input, replacing `your-user` with the repository owner:
 
 ```nix
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/61b7c44c4073";
-    orangepi-zero2w.url = "github:OWNER/orangepi-zero2w-nixos";
+    orangepi-zero2w.url = "github:your-user/orangepi-zero2w-nixos";
     orangepi-zero2w.inputs.nixpkgs.follows = "nixpkgs";
   };
 
@@ -57,9 +49,25 @@ The repository is hardware enablement only. Application-specific users, services
 }
 ```
 
-The flake pins the nixpkgs revision used for hardware validation. Following a newer downstream nixpkgs may work, but that combination is not the tested baseline.
+The pinned nixpkgs revision is the tested baseline. Other revisions may require changes.
+
+The USB recovery network is enabled by default. To disable it:
+
+```nix
+hardware.orangePiZero2W.recoveryNetwork.enable = false;
+```
+
+The overlay exposes its packages under `pkgs.orangePiZero2W`:
+
+- `kernel`
+- `kernelPackages`
+- `deviceTree`
+- `uwe5622Firmware`
+- `uboot`
 
 ## Build
+
+Builds require an `aarch64-linux` host or a configured ARM64 remote builder.
 
 ```sh
 nix build .#sdImage
@@ -69,9 +77,9 @@ nix build .#firmware
 nix build .#uboot
 ```
 
-The default package is the SD image. It uses `examples/minimal.nix`: local user `nixos` has initial password `nixos`, and SSH is disabled. Treat it as a boot and hardware smoke-test image, not as an appliance image.
+`default` and `sdImage` build `examples/minimal.nix`. The image creates local user `nixos` with initial password `nixos`; SSH is disabled. It is intended for boot and hardware validation, not as a ready-made appliance.
 
-Check the target device with `lsblk` before writing:
+Check the target with `lsblk` before writing an image:
 
 ```sh
 sudo dd if=result/sd-image/*.img of=/dev/disk/by-id/CHANGE_ME bs=16M conv=fsync status=progress
@@ -79,37 +87,46 @@ sudo dd if=result/sd-image/*.img of=/dev/disk/by-id/CHANGE_ME bs=16M conv=fsync 
 
 ## USB recovery network
 
-The module configures USB0 as an ECM Ethernet gadget:
+USB0 is configured as an ECM Ethernet gadget:
 
-- Board: `192.168.7.2/24`
+- Board address: `192.168.7.2/24`
 - Suggested host address: `192.168.7.1/24`
 - USB0 is the device-capable Type-C port
 - USB1 is the host-only Type-C port
 
-Use a USB-A-to-C data cable if the host does not enumerate the gadget through a direct C-to-C cable. The minimal image brings up the network device but does not enable SSH.
+Use a USB-A-to-C data cable if a direct C-to-C cable does not enumerate the gadget. Enabling SSH and allowing it on `usb0` remains the responsibility of the downstream NixOS configuration.
 
-## Verify on the board
+## Hardware report
+
+The module installs an on-device report:
 
 ```sh
 sudo orange-pi-zero2w-hardware-check
 ```
 
-The command reports CPU frequency scaling, DRM, GPU, USB, Wi-Fi, ALSA, storage, GPIO, thermal, and failed systemd units.
+It checks CPU frequency scaling, DRM, GPU, USB, Wi-Fi, ALSA, storage, GPIO, thermal zones, and failed systemd units.
 
-## Repository layout
+## Development
 
-- `modules/` — reusable NixOS module
+```sh
+nix fmt
+nix flake check --no-build
+```
+
+Repository layout:
+
+- `modules/` — NixOS module
 - `pkgs/kernel/` — kernel source composition, patches, and configuration
-- `pkgs/devicetree/` — independently compiled board DTB
-- `pkgs/uwe5622-firmware/` — pinned UWE5622 firmware files
+- `pkgs/devicetree/` — final board DTB
+- `pkgs/uwe5622-firmware/` — pinned UWE5622 firmware
 - `patches/` — local kernel and device-tree patches
-- `examples/minimal.nix` — minimal image configuration
-- `scripts/hardware-check.sh` — on-device verification report
+- `examples/minimal.nix` — minimal boot image
+- `scripts/hardware-check.sh` — hardware report source
 
-Device-tree-only changes are built in `pkgs/devicetree` and do not invalidate the kernel derivation.
+Device-tree patches are applied by `pkgs/devicetree`; changing them does not rebuild the kernel.
 
-## Upstream sources
+## Upstream sources and license
 
-The kernel package uses nixpkgs' pinned Linux 7.1 source, selected Armbian sunxi 7.1 patches, and Armbian's UWE5622 driver. UWE5622 firmware files are fetched by hash from Armbian's firmware repository.
+The kernel package uses nixpkgs' Linux 7.1 source, selected Armbian sunxi 7.1 patches, and Armbian's UWE5622 driver. UWE5622 firmware is fetched by hash from Armbian's firmware repository.
 
-The Nix code and documentation in this repository are MIT licensed. Upstream kernel code, patches, driver source, and firmware retain their original licenses.
+Repository Nix code, documentation, and scripts are available under the MIT license. Kernel and device-tree patches retain the licenses of the code they modify. UWE5622 driver and firmware files retain their upstream licenses.

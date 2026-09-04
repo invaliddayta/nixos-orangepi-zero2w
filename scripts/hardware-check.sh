@@ -45,7 +45,9 @@ else
   fail "Mali-G31 has no driver"
 fi
 
-if systemctl is-active --quiet usb-gadget.service && ip address show usb0 | grep -q '192\.168\.7\.2/24'; then
+if ! systemctl cat usb-gadget.service >/dev/null 2>&1; then
+  info "USB0 ECM recovery network disabled"
+elif systemctl is-active --quiet usb-gadget.service && ip address show usb0 | grep -q '192\.168\.7\.2/24'; then
   pass "USB0 ECM recovery network"
 else
   fail "USB0 ECM recovery network"
@@ -72,11 +74,15 @@ else
   fail "no ALSA sound card"
 fi
 
-if [ -b /dev/mmcblk0 ] && findmnt -n / >/dev/null; then
-  pass "microSD root storage"
-else
-  fail "microSD root storage"
-fi
+root_source=$(findmnt -n -o SOURCE / 2>/dev/null || true)
+case $root_source in
+  /dev/mmcblk0p*)
+    pass "microSD root storage: $root_source"
+    ;;
+  *)
+    fail "root storage is not a microSD partition: ${root_source:-unknown}"
+    ;;
+esac
 
 if [ -c /dev/mtd0 ]; then
   pass "16 MiB SPI NOR present"
@@ -91,10 +97,17 @@ else
   fail "$gpio_count GPIO controllers"
 fi
 
+thermal_count=0
 for zone in /sys/class/thermal/thermal_zone*; do
   [ -r "$zone/type" ] || continue
+  thermal_count=$((thermal_count + 1))
   info "thermal $(cat "$zone/type"): $(cat "$zone/temp") millidegrees C"
 done
+if [ "$thermal_count" -ge 4 ]; then
+  pass "$thermal_count thermal zones"
+else
+  fail "$thermal_count thermal zones"
+fi
 
 if [ -z "$(systemctl --failed --no-legend)" ]; then
   pass "no failed systemd units"

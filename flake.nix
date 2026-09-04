@@ -51,7 +51,7 @@
                 ${config.boot.loader.generic-extlinux-compatible.populateCmd} -c ${config.system.build.toplevel} -d ./files/boot
               '';
               sdImage.postBuildCommands = ''
-                dd if=${pkgs.ubootOrangePiZero2W}/u-boot-sunxi-with-spl.bin of=$img bs=1024 seek=8 conv=notrunc
+                dd if=${pkgs.orangePiZero2W.uboot}/u-boot-sunxi-with-spl.bin of=$img bs=1024 seek=8 conv=notrunc
               '';
             }
           )
@@ -61,16 +61,17 @@
     {
       overlays.default = overlay;
       nixosModules.default = import ./modules/default.nix overlay;
+      formatter.${system} = pkgs.nixfmt-tree;
 
       nixosConfigurations.minimal = minimal;
 
       packages.${system} = {
         default = minimalSd.config.system.build.sdImage;
         sdImage = minimalSd.config.system.build.sdImage;
-        kernel = pkgs.orangePiZero2WKernel;
-        devicetree = pkgs.orangePiZero2WDeviceTree;
-        firmware = pkgs.uwe5622Firmware;
-        uboot = pkgs.ubootOrangePiZero2W;
+        kernel = pkgs.orangePiZero2W.kernel;
+        devicetree = pkgs.orangePiZero2W.deviceTree;
+        firmware = pkgs.orangePiZero2W.uwe5622Firmware;
+        uboot = pkgs.orangePiZero2W.uboot;
       };
     };
 }

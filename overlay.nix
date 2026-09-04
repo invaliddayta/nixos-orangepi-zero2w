@@ -1,22 +1,30 @@
 { armbianBuild, uwe5622Source }:
 
-final: prev: {
-  ubootOrangePiZero2W = prev.ubootOrangePiZero3.override {
-    defconfig = "orangepi_zero2w_defconfig";
-  };
+final: prev:
 
-  orangePiZero2WKernel = final.callPackage ./pkgs/kernel {
+let
+  kernel = final.callPackage ./pkgs/kernel {
     inherit armbianBuild uwe5622Source;
     features = { };
     kernelPatches = [ ];
     randstructSeed = "";
     structuredExtraConfig = { };
   };
-  linuxPackagesOrangePiZero2W = final.linuxPackagesFor final.orangePiZero2WKernel;
+in
+{
+  orangePiZero2W = {
+    inherit kernel;
 
-  orangePiZero2WDeviceTree = final.callPackage ./pkgs/devicetree {
-    inherit armbianBuild;
+    kernelPackages = final.linuxPackagesFor kernel;
+
+    deviceTree = final.callPackage ./pkgs/devicetree {
+      inherit armbianBuild;
+    };
+
+    uwe5622Firmware = final.callPackage ./pkgs/uwe5622-firmware { };
+
+    uboot = prev.ubootOrangePiZero3.override {
+      defconfig = "orangepi_zero2w_defconfig";
+    };
   };
-
-  uwe5622Firmware = final.callPackage ./pkgs/uwe5622-firmware { };
 }
