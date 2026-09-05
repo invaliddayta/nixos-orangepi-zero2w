@@ -108,8 +108,14 @@ The report covers CPU frequency scaling, DRM, GPU, USB, Wi-Fi, ALSA, storage, GP
 
 ```sh
 nix fmt
-nix flake check --no-build
+nix flake check --all-systems --max-jobs 1 --cores 2
 ```
+
+Checks build the DTB, firmware, U-Boot, and hardware report, validate the generated
+kernel configuration, and exercise USB gadget failure/cleanup/retry paths using a
+mock filesystem. They do not replace testing on the board. CI runs these checks
+on ARM64 for pull requests, main, and weekly scheduled runs. Full kernel and
+SD-image builds run only for version tags and manual workflow runs.
 
 Device-tree patches are built by `pkgs/devicetree`, so changing them does not rebuild the kernel.
 

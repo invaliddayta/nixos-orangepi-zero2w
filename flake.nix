@@ -65,6 +65,17 @@
 
       nixosConfigurations.minimal = minimal;
 
+      checks.${system} = {
+        inherit (self.packages.${system}) devicetree firmware uboot;
+        hardware-report = minimal.config.system.build.orangePiZero2WHardwareCheck;
+        kernel-config = pkgs.callPackage ./tests/kernel-config.nix {
+          kernel = pkgs.orangePiZero2W.kernel;
+        };
+        usb-gadget = pkgs.callPackage ./tests/usb-gadget.nix {
+          service = minimal.config.systemd.services.usb-gadget.serviceConfig;
+        };
+      };
+
       packages.${system} = {
         default = minimalSd.config.system.build.sdImage;
         sdImage = minimalSd.config.system.build.sdImage;

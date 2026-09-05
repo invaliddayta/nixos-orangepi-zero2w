@@ -7,6 +7,21 @@
 
 let
   cfg = config.hardware.orangePiZero2W;
+  usbGadgetCleanup = pkgs.writeShellScript "usb-gadget-cleanup" ''
+    set -eu
+
+    gadget=/sys/kernel/config/usb_gadget/orangepizero2w
+    [ -d "$gadget" ] || exit 0
+    # A zero-byte write does not unbind a configfs gadget.
+    if [ -e "$gadget/UDC" ] && [ -n "$(cat "$gadget/UDC")" ]; then
+      printf '\n' > "$gadget/UDC"
+    fi
+    rm -f "$gadget/configs/c.1/ecm.usb0"
+    for directory in configs/c.1/strings/0x409 configs/c.1 functions/ecm.usb0 strings/0x409; do
+      [ ! -d "$gadget/$directory" ] || rmdir "$gadget/$directory"
+    done
+    rmdir "$gadget"
+  '';
   hardwareCheck = pkgs.writeShellApplication {
     name = "orange-pi-zero2w-hardware-check";
     runtimeInputs = with pkgs; [
@@ -82,6 +97,8 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
+        ExecStartPre = usbGadgetCleanup;
+        ExecStopPost = usbGadgetCleanup;
         ExecStart = pkgs.writeShellScript "usb-gadget-start" ''
           set -eu
 
@@ -133,19 +150,6 @@ in
           done
           ip address replace 192.168.7.2/24 dev usb0
           ip link set usb0 up
-        '';
-        ExecStop = pkgs.writeShellScript "usb-gadget-stop" ''
-          set -u
-
-          gadget=/sys/kernel/config/usb_gadget/orangepizero2w
-          [ -d "$gadget" ] || exit 0
-          : > "$gadget/UDC"
-          rm -f "$gadget/configs/c.1/ecm.usb0"
-          rmdir "$gadget/configs/c.1/strings/0x409"
-          rmdir "$gadget/configs/c.1"
-          rmdir "$gadget/functions/ecm.usb0"
-          rmdir "$gadget/strings/0x409"
-          rmdir "$gadget"
         '';
       };
     };
@@ -230,5 +234,6 @@ in
     };
 
     environment.systemPackages = [ hardwareCheck ];
+    system.build.orangePiZero2WHardwareCheck = hardwareCheck;
   };
 }

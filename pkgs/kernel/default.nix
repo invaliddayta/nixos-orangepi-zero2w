@@ -62,6 +62,8 @@ linux_7_1.override {
   autoModules = false;
   buildDTBs = false;
   inherit features randstructSeed;
+  # autoModules=false leaves unrelated nixpkgs common-config options unused.
+  # checks.kernel-config verifies every board override and essential boot driver.
   ignoreConfigErrors = true;
   argsOverride.src = linuxWithUwe5622;
 
