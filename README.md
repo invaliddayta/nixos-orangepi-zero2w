@@ -1,23 +1,72 @@
-# nixos-orangepi-zero2w
+# NixOS on Orange Pi Zero 2W
 
-NixOS support for the Orange Pi Zero 2W (Allwinner H618).
+**Small board. Full NixOS.** A reproducible NixOS flake for the Orange Pi Zero 2W, with the board-specific kernel, firmware, and bootloader already wired up. Build an SD image, flash it, and boot, or bring the hardware module into your own configuration.
 
-Included:
+<p align="center">
+  <a href="https://www.armbian.com/orange-pi-zero-2w/">
+    <img src="https://www.armbian.com/api/v1/images/boards/480/orangepizero2w.png" width="480" alt="Orange Pi Zero 2W board with its Allwinner H618 chip, two USB-C ports, micro-HDMI port, and microSD slot" />
+  </a>
+  <br />
+  <strong>Allwinner H618 &middot; Quad-core Cortex-A53 &middot; Tested with 1 GiB RAM</strong>
+  <br />
+  <sub>Board photo via <a href="https://www.armbian.com/orange-pi-zero-2w/">Armbian</a>.</sub>
+</p>
 
-- Linux 7.1 with H616 display, Cedrus, MMC, and UWE5622 changes
-- A board DTB built separately from the kernel
-- UWE5622 Wi-Fi firmware
-- U-Boot and extlinux configuration
-- Optional USB0 recovery networking
-- A minimal SD-card image
+<p align="center">
+  <a href="#quick-start">Quick start</a> &middot;
+  <a href="#hardware-status">Hardware status</a> &middot;
+  <a href="#use-the-module">Use the module</a> &middot;
+  <a href="#usb-recovery">USB recovery</a>
+</p>
+
+## What you get
+
+- **A bootable NixOS image:** U-Boot, extlinux, a minimal system, and zram enabled.
+- **The board support included:** Linux 7.1 with selected Armbian patches, a board-specific device tree, and UWE5622 Wi-Fi firmware.
+- **More than a serial prompt:** working HDMI video, Panfrost GPU support, and Cedrus hardware video decoding. Bring your own desktop or application.
+- **A recovery path over USB:** optional USB0 Ethernet gadget networking, enabled by default.
+
+> Tested on the **1 GiB Orange Pi Zero 2W**, without the expansion board. Other RAM sizes are untested. The Orange Pi Zero 2 and Zero 3 are different boards.
+
+## Quick start
+
+### 1. Build the image
+
+Use an `aarch64-linux` machine or a configured ARM64 remote builder. The first build includes a patched kernel, so a faster ARM64 machine is preferable to building on the board itself.
+
+```sh
+git clone https://github.com/invaliddayta/nixos-orangepi-zero2w.git
+cd nixos-orangepi-zero2w
+nix build .#sdImage
+```
+
+### 2. Flash a microSD card
+
+**This erases the target disk.** Use `lsblk` to identify the card, unmount any mounted partitions, and replace `CHANGE_ME` with its whole-disk identifier, not a partition.
+
+```sh
+lsblk -o NAME,SIZE,MODEL,MOUNTPOINTS
+sudo dd if=result/sd-image/*.img of=/dev/disk/by-id/CHANGE_ME bs=16M conv=fsync status=progress
+```
+
+### 3. Boot and log in
+
+Insert the card, connect a local console, and power on. Use a micro-HDMI display and USB1 keyboard, or the UART0 serial console at **115200 baud** with a 3.3 V USB-to-TTL adapter.
+
+| Local login | Value |
+| --- | --- |
+| Username | `nixos` |
+| Initial password | `nixos` |
+
+Change the password with `passwd` after logging in. The image uses [`examples/minimal.nix`](examples/minimal.nix): **SSH is disabled**, and no graphical session or application is installed. USB recovery provides a network link, not an automatic remote login.
 
 ## Hardware status
 
-Tested on the 1 GiB model without the expansion board. Other RAM sizes are untested. The Zero 2 and Zero 3 are different boards.
-
-- **Working:** boot, microSD, UART, CPU frequency scaling, thermal sensors, HDMI video, Panfrost, onboard Wi-Fi, USB0 gadget, USB1 host, and Cedrus MPEG-2/H.264/H.265/VP8 decoding
-- **Partly tested:** analog ALSA output, touch input, GPIO, header I2C/SPI, SPI NOR, CEC, and RTC
-- **Not supported:** Bluetooth, HDMI audio, hardware video encoding, and expansion-board Ethernet/USB
+| Status | Features |
+| --- | --- |
+| **Working** | Boot, microSD, UART, CPU frequency scaling, thermal sensors, HDMI video, Panfrost, onboard Wi-Fi, USB0 gadget, USB1 host, and Cedrus MPEG-2/H.264/H.265/VP8 decoding |
+| **Partly tested** | Analog ALSA output, touch input, GPIO, header I2C/SPI, SPI NOR, CEC, and RTC |
+| **Not supported** | Bluetooth, HDMI audio, hardware video encoding, and expansion-board Ethernet/USB |
 
 Details and test limits are in [`HARDWARE.md`](HARDWARE.md).
 
@@ -63,25 +112,18 @@ pkgs.orangePiZero2W.uwe5622Firmware
 pkgs.orangePiZero2W.uboot
 ```
 
-## Build
+## Build individual components
 
-Use an `aarch64-linux` machine or an ARM64 remote builder.
+The default package is the SD image (`nix build` is equivalent to `nix build .#sdImage`). You can also build its components separately on an ARM64 builder:
 
 ```sh
-nix build .#sdImage
 nix build .#kernel
 nix build .#devicetree
 nix build .#firmware
 nix build .#uboot
 ```
 
-The default package is the SD image. It uses `examples/minimal.nix`, creates local user `nixos` with password `nixos`, leaves SSH disabled, and installs no graphical session or application.
-
-Check the target with `lsblk` first:
-
-```sh
-sudo dd if=result/sd-image/*.img of=/dev/disk/by-id/CHANGE_ME bs=16M conv=fsync status=progress
-```
+Each command updates the `result` symlink. Before flashing, run `nix build .#sdImage` again so `result` points to the image rather than an individual component.
 
 ## USB recovery
 
